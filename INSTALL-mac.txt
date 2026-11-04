@@ -1,0 +1,14 @@
+HitPad — install on macOS
+
+1. Copy the plugins:
+     HitPad.component  ->  ~/Library/Audio/Plug-Ins/Components/
+     HitPad.vst3       ->  ~/Library/Audio/Plug-Ins/VST3/
+     HitPad.app        ->  /Applications  (optional standalone)
+
+2. The build is ad-hoc signed, not notarized, so clear the download quarantine:
+     xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/Components/HitPad.component
+     xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/HitPad.vst3
+
+3. Logic: it shows up under Instrument > AU Instruments > Amaury > HitPad.
+   If it doesn't appear, run Logic's Plug-in Manager "Reset & Rescan Selection",
+   or in Terminal:  killall -9 AudioComponentRegistrar ; auval -v aumu HtPd Amfn

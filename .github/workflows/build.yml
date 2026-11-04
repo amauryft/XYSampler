@@ -1,0 +1,41 @@
+name: build-mac
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: DSP core tests
+        run: |
+          clang++ -std=c++17 -O2 -I Source tests/core_test.cpp -o core_test
+          ./core_test
+
+      - name: Configure (universal arm64 + x86_64)
+        run: >
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+          -DCOPY_PLUGIN_AFTER_BUILD=OFF
+
+      - name: Build AU, VST3, Standalone
+        run: cmake --build build --config Release -j 4
+
+      - name: Package (ad-hoc signed)
+        run: |
+          mkdir -p dist
+          cp -R "$(find build -name 'HitPad.component' -type d | head -1)" dist/
+          cp -R "$(find build -name 'HitPad.vst3' -type d | head -1)" dist/
+          cp -R "$(find build -name 'HitPad.app' -type d | head -1)" dist/
+          codesign --force --deep -s - dist/HitPad.component dist/HitPad.vst3 dist/HitPad.app
+          cp INSTALL-mac.txt dist/
+          cd dist && zip -qry ../HitPad-mac.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HitPad-mac
+          path: HitPad-mac.zip
