@@ -24,7 +24,7 @@ Values are taken once per hit, so a ringing hit keeps its pitch and decay. Signa
 - **Trigger:** any MIDI note (velocity sets the level), the HIT button, or a click on the pad.
 - **Pad:** drag to set. Hold Shift for fine moves. Double-click to reset.
 - **Knobs:** drag up or down. Hold Shift for fine moves. Double-click or Option-click to reset.
-- **Themes:** the four dots, top right. The theme and window size are saved with the session.
+- **Themes:** the three dots, top right (Dark, Violet, Light). The theme and window size are saved with the session.
 
 ## Build
 

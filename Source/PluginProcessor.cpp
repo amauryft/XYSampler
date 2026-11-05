@@ -202,7 +202,8 @@ void XYSamplerProcessor::setStateInformation (const void* data, int size)
         if (xml->hasTagName (apvts.state.getType()))
         {
             auto tree = juce::ValueTree::fromXml (*xml);
-            uiTheme = tree.getProperty ("uiTheme", "light").toString();
+            uiTheme = tree.getProperty ("uiTheme", "dark").toString();
+            if (uiTheme == "color") uiTheme = "dark";   // Tropic was removed in 0.2.4
             uiScale = (double) tree.getProperty ("uiScale", 1.0);
             if (auto* mb = tree.getProperty ("sampleData").getBinaryData())
                 loadSampleBytes (tree.getProperty ("sampleName").toString(), *mb);

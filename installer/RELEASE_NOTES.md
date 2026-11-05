@@ -4,6 +4,8 @@ It shows up under **Instrument → AU Instruments → Mau Audio → XYSampler**.
 If macOS blocks the installer: System Settings → Privacy & Security → **Open Anyway**.
 The installer also removes the old *HitPad* test build.
 
+0.2.4: three themes, Dark (now the default), Violet and Light. Tropic is gone, and sessions that used it open in Dark.
+
 0.2.3: selected buttons show only an accent border and text, with no fill, like SuperSpread. DECAY is centred again, and PITCH starts on its baseline.
 
 0.2.2: the pad grid zooms with X SENS / Y SENS (lower sensitivity = bigger cells), and the PITCH / DECAY labels sit together in the bottom-left corner.
@@ -16,4 +18,4 @@ What's in 0.2
 - **Motion**: per-hit movement around your point. Patterns, Depth, Rate synced to the song (1 bar to 1/8), Clock = Time or Step. Locked to the bar while Logic plays, so loops repeat exactly.
 - **Drive** (saturation) and **Level** knobs. Drag up/down, Shift for fine, double-click or Option-click to reset.
 - Load a sample by clicking the waveform strip or dropping a file on the window. The sample is saved inside the Logic session.
-- Four themes (dots, top right), saved with the session.
+- Three themes (dots, top right): Dark, Violet, Light. Saved with the session.

@@ -122,21 +122,15 @@ const THEMES = {
   light:  { bg:'#eef0f3', c1:'#f9fafb', c2:'#f3f4f6', ring:'#e3e6ea', hi:'#ffffff', scr:'#eceef1', scrRing:'#e0e3e7', grid:'#d5d9de', ink:'#2f3338', lab:'#6b737b', acc:'#f05a1a', accT:'#c4420c', raw:'#c9ced4', d1:'#ffffff', d2:'#f6f7f9', d3:'#d8dce1', trackCol:'#d6dade', sh:'rgba(30,40,55,.10)', scrSh:'rgba(20,30,40,.13)', glow:'240,90,26', btnTxt:'#ffffff', chip:'#ffffff', chipBorder:'#d6dade' },
   dark:   { bg:'#171a1e', c1:'#262b31', c2:'#1e2227', ring:'#2a3037', hi:'#2f363e', scr:'#111316', scrRing:'#252a30', grid:'#262c32', ink:'#e4e8ec', lab:'#a1aab3', acc:'#5ab8ff', accT:'#7cc6ff', raw:'#363d45', d1:'#434b55', d2:'#353c45', d3:'#20252b', trackCol:'#3a424b', sh:'rgba(0,0,0,.5)', scrSh:'rgba(0,0,0,.55)', glow:'90,184,255', btnTxt:'#0e1013', chip:'#2b3138', chipBorder:'#3a424b' },
   violet: { bg:'#211e37', c1:'#2d294b', c2:'#272340', ring:'#3b366a', hi:'#443f78', scr:'#1c192f', scrRing:'#2d284a', grid:'#2e294c', ink:'#e0ddf1', lab:'#a69ddb', acc:'#f4ff1f', accT:'#f8ff5a', raw:'#3a3461', d1:'#453d72', d2:'#3a3460', d3:'#292544', trackCol:'#3e3767', sh:'rgba(5,3,20,.55)', scrSh:'rgba(0,0,0,.55)', glow:'244,255,31', btnTxt:'#1c192f', chip:'#332e55', chipBorder:'#3e3767' },
-  color:  { bg:'#e6e8ec', c1:'#f3f4f6', c2:'#eceef1', ring:'#e3e6ea', hi:'#fbfbfc', scr:'#eceef1', scrRing:'#e0e3e7', grid:'#d5d9de', ink:'#2f3338', lab:'#5f676f', acc:'#f05a1a', accT:'#c4420c', raw:'#c9ced4', d1:'#ffffff', d2:'#f6f7f9', d3:'#d8dce1', trackCol:'#d0d5db', sh:'rgba(30,40,55,.12)', scrSh:'rgba(0,0,0,.25)', glow:'139,92,246', btnTxt:'#ffffff', chip:'#ffffff', chipBorder:'#d0d5db' }
 };
 const SW = [
-  { id:'light',  label:'Light theme',  fill:'#d9dde2' },
   { id:'dark',   label:'Dark theme',   fill:'#1a1d22' },
   { id:'violet', label:'Violet theme', fill:'#5b4fb5' },
-  { id:'color',  label:'Tropic theme', fill:'linear-gradient(90deg,#2fa84f 0 25%,#0ea5c9 25% 50%,#8b5cf6 50% 75%,#e23d3d 75% 100%)' }
+  { id:'light',  label:'Light theme',  fill:'#d9dde2' }
 ];
 function tokens(name) {
   const t = Object.assign({}, THEMES[name] || THEMES.light);
-  if (name === 'color') Object.assign(t, { waveScr:'#1f9a44', waveRaw:'rgba(255,255,255,.28)', waveShaped:'#ffffff', waveLab:'#e3f5e8',
-      padScr:'#0797ba', padGrid:'#3cb0c9', padLine:'#ffffff', padLab:'#e6f6fa', puckRing:'rgba(255,255,255,.9)',
-      motion:'#ffd23f', motionGlow:'255,210,63', motionTxt:'#0b7f9c', hitMark:'#ffffff', segAcc:'#2fa84f', segTxt:'#ffffff', segOn:'#1f7f3a', segGlow:'47,168,79',
-      hitBg:'#8b5cf6', hitTxt:'#6a3fd0', k0:'#e23d3d', k1:'#8b5cf6', kt0:'#b32a2a', kt1:'#6a3fd0' });
-  else Object.assign(t, { waveScr:t.scr, waveRaw:t.raw, waveShaped:t.acc, waveLab:t.lab, padScr:t.scr, padGrid:t.grid, padLine:t.acc,
+  Object.assign(t, { waveScr:t.scr, waveRaw:t.raw, waveShaped:t.acc, waveLab:t.lab, padScr:t.scr, padGrid:t.grid, padLine:t.acc,
       padLab:t.lab, puckRing:t.acc, motion:t.acc, motionGlow:t.glow, motionTxt:t.accT, hitMark:t.ink, segAcc:t.acc, segTxt:t.btnTxt, segOn:t.accT, segGlow:t.glow,
       hitBg:t.acc, hitTxt:t.accT, k0:t.acc, k1:t.acc, kt0:t.accT, kt1:t.accT });
   return t;
@@ -288,7 +282,7 @@ function knob(k, name, i) {
 
 // ---------------------------------------------------------------- render
 function applyTheme(name) {
-  theme = THEMES[name] ? name : 'light';
+  theme = THEMES[name] ? name : 'dark';
   const t = tokens(theme), st = document.documentElement.style;
   for (const k in t) st.setProperty('--' + k, t[k]);
   document.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.th === theme ? 'true' : 'false'));
@@ -392,7 +386,7 @@ function init() {
   build();
   for (const k in S) S[k].valueChangedEvent.addListener(render);
   MOT.valueChangedEvent.addListener(render);
-  applyTheme('light');
+  applyTheme('dark');
   if (native.getTheme) native.getTheme().then(t => applyTheme(String(t)));
   render(); fit(); addEventListener('resize', fit);
   requestAnimationFrame(frame);

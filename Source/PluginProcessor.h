@@ -45,7 +45,7 @@ public:
     juce::File lastDirectory;
 
     // UI state saved with the session
-    juce::String uiTheme { "light" };
+    juce::String uiTheme { "dark" };
     double uiScale = 1.0;
 
     // Audio thread -> UI
