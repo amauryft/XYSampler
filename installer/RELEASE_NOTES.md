@@ -4,6 +4,8 @@ It shows up under **Instrument → AU Instruments → Mau Audio → XYSampler**.
 If macOS blocks the installer: System Settings → Privacy & Security → **Open Anyway**.
 The installer also removes the old *HitPad* test build.
 
+0.2.1: the SET / LAST readout no longer jumps around. Each value has a fixed slot.
+
 What's in 0.2
 - XY pad: **X = Decay, Y = Pitch** (centre = 0 st). Click the pad to audition, drag to set, Shift-drag for fine moves, double-click to reset.
 - **X SENS / Y SENS**: how much the pad changes per movement (decay span, pitch range ±2 to ±24 st).

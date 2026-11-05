@@ -17,7 +17,8 @@ button{font-family:inherit}
 .scr{border-radius:14px;box-shadow:inset 0 2px 7px var(--scrSh),inset 0 0 0 1px var(--scrRing)}
 .lab{font-weight:800;font-size:9.5px;letter-spacing:.2em;color:var(--lab);white-space:nowrap}
 .ttl{font-family:'Michroma',sans-serif;font-size:11px;letter-spacing:.18em}
-.val{font-family:'Michroma',sans-serif;font-size:10px;text-align:right}
+.val{font-family:'Michroma',sans-serif;font-size:10px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.num{display:inline-block;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18px}
 .chip{border:1.5px solid var(--chipBorder);background:var(--chip);color:var(--ink);border-radius:8px;font-weight:800;font-size:10.5px;cursor:pointer;padding:0}
 .chip[aria-pressed=true]{background:var(--segAcc);border-color:var(--segAcc);color:var(--segTxt)}
@@ -58,8 +59,8 @@ input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18p
   <div style="flex:1;min-height:0;display:flex;gap:14px">
     <div class="card" style="width:420px;flex-shrink:0;padding:12px;display:flex;flex-direction:column;gap:9px">
       <div class="row" style="justify-content:space-between;padding:0 4px">
-        <div class="ttl">DECAY &#xD7; PITCH</div>
-        <div style="font-weight:700;font-size:11px;letter-spacing:.04em;color:var(--lab)">SET <span id="setTxt" style="color:var(--ink)"></span> &#xB7; LAST <span id="nowTxt" style="color:var(--motionTxt)"></span></div>
+        <div class="ttl" style="white-space:nowrap">XY PAD</div>
+        <div style="font-weight:700;font-size:11px;letter-spacing:.02em;color:var(--lab);white-space:nowrap">SET <span class="num" id="sD" style="width:44px;color:var(--ink)"></span><span class="num" id="sP" style="width:52px;color:var(--ink)"></span><span style="display:inline-block;width:16px;text-align:center">&#xB7;</span>LAST <span class="num" id="nD" style="width:44px;color:var(--motionTxt)"></span><span class="num" id="nP" style="width:52px;color:var(--motionTxt)"></span></div>
       </div>
       <div id="pad" class="scr">
         <div class="a" style="left:0;right:0;top:50%;border-top:1.5px dashed var(--padLine);opacity:.3"></div>
@@ -269,7 +270,7 @@ function knob(k, name, i) {
     <path class="arc" fill="none" stroke="var(--k${i})" stroke-width="4" stroke-linecap="round"/>
     <circle cx="40" cy="42" r="23" fill="rgba(0,0,0,.18)"/><circle cx="40" cy="40" r="23" fill="url(#kg${i})" stroke="var(--ring)"/>
     <line class="ind" stroke="var(--k${i})" stroke-width="3" stroke-linecap="round"/></svg>
-    <div class="lab">${name}</div><div class="mi kv" style="font-size:10.5px;margin-top:2px;color:var(--kt${i})"></div>`;
+    <div class="lab">${name}</div><div class="mi kv" style="font-size:10.5px;margin-top:2px;width:74px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--kt${i})"></div>`;
   let y0 = 0, n0 = 0;
   el.addEventListener('pointerdown', e => {
     if (e.altKey) { setChoice(k, P[k][2]); return; }
@@ -303,8 +304,8 @@ function render() {
   $('#yTop').textContent = '+' + ys; $('#yBot').textContent = '\u2212' + ys;
   $('#home').style.left = pct(x); $('#home').style.top = pct(1 - y);
   $('#hl').style.top = pct(1 - y); $('#vl').style.left = pct(x);
-  $('#setTxt').textContent = t60Txt(t60Of(decayPos(x, xs))) + ' \u00B7 ' + stTxt(pitchSt(y, ys));
-  $('#nowTxt').textContent = lastHit ? t60Txt(lastHit.t60) + ' \u00B7 ' + stTxt(lastHit.st) : '\u2014';
+  $('#sD').textContent = t60Txt(t60Of(decayPos(x, xs))); $('#sP').textContent = stTxt(pitchSt(y, ys));
+  $('#nD').textContent = lastHit ? t60Txt(lastHit.t60) : '\u2014'; $('#nP').textContent = lastHit ? stTxt(lastHit.st) : '';
   const orb = $('#orbit');
   orb.style.display = on ? '' : 'none'; orb.style.left = pct(x); orb.style.top = pct(1 - y);
   orb.style.width = (depth * 200) + '%'; orb.style.height = (depth * 200) + '%'; orb.style.borderRadius = pat === 4 ? '6px' : '50%';
