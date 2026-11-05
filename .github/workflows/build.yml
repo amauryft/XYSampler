@@ -1,12 +1,17 @@
-name: build-mac
+name: Build Mac installer
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   mac:
     runs-on: macos-14
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -15,27 +20,64 @@ jobs:
           clang++ -std=c++17 -O2 -I Source tests/core_test.cpp -o core_test
           ./core_test
 
-      - name: Configure (universal arm64 + x86_64)
-        run: >
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
-          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
-          -DCOPY_PLUGIN_AFTER_BUILD=OFF
-
-      - name: Build AU, VST3, Standalone
-        run: cmake --build build --config Release -j 4
-
-      - name: Package (ad-hoc signed)
+      - name: "Configure (universal - Apple Silicon + Intel)"
         run: |
-          mkdir -p dist
-          cp -R "$(find build -name 'HitPad.component' -type d | head -1)" dist/
-          cp -R "$(find build -name 'HitPad.vst3' -type d | head -1)" dist/
-          cp -R "$(find build -name 'HitPad.app' -type d | head -1)" dist/
-          codesign --force --deep -s - dist/HitPad.component dist/HitPad.vst3 dist/HitPad.app
-          cp INSTALL-mac.txt dist/
-          cd dist && zip -qry ../HitPad-mac.zip .
+          cmake -S . -B build -G Xcode \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Build AU + VST3
+        run: |
+          cmake --build build --config Release --target XYSampler_AU XYSampler_VST3 -- -quiet 2>&1 | tee build.log
+          test -d build/XYSampler_artefacts/Release/AU/XYSampler.component
+          test -d build/XYSampler_artefacts/Release/VST3/XYSampler.vst3
+
+      - name: Sign (ad-hoc) and package
+        run: |
+          set -e
+          VER=$(grep -m1 'project(XYSampler VERSION' CMakeLists.txt | sed -E 's/.*VERSION ([0-9.]+).*/\1/')
+          mkdir -p stage/au stage/vst3 dist
+          cp -R build/XYSampler_artefacts/Release/AU/XYSampler.component stage/au/
+          cp -R build/XYSampler_artefacts/Release/VST3/XYSampler.vst3 stage/vst3/
+          codesign --force --deep --sign - stage/au/XYSampler.component
+          codesign --force --deep --sign - stage/vst3/XYSampler.vst3
+          # remove the old "HitPad" test build so Logic doesn't list both
+          mkdir -p scripts && cat > scripts/preinstall <<'SH'
+          #!/bin/sh
+          rm -rf "/Library/Audio/Plug-Ins/Components/HitPad.component" "/Library/Audio/Plug-Ins/VST3/HitPad.vst3"
+          for h in /Users/*; do rm -rf "$h/Library/Audio/Plug-Ins/Components/HitPad.component" "$h/Library/Audio/Plug-Ins/VST3/HitPad.vst3"; done
+          exit 0
+          SH
+          chmod +x scripts/preinstall
+          pkgbuild --root stage/au --install-location /Library/Audio/Plug-Ins/Components --scripts scripts \
+            --identifier com.mauaudio.xysampler.au --version "$VER" au.pkg
+          pkgbuild --root stage/vst3 --install-location /Library/Audio/Plug-Ins/VST3 \
+            --identifier com.mauaudio.xysampler.vst3 --version "$VER" vst3.pkg
+          productbuild --package au.pkg --package vst3.pkg "dist/XYSampler-$VER-Installer.pkg"
+          lipo -info stage/au/XYSampler.component/Contents/MacOS/XYSampler | tee dist/architectures.txt
+
+      - name: Install on the build Mac and run Apple's AU validator (auval)
+        run: |
+          sudo installer -pkg dist/XYSampler-*-Installer.pkg -target /
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          sleep 3
+          auval -v aumu XYsm Mauf 2>&1 | tee dist/auval.log
+          grep -q "AU VALIDATION SUCCEEDED" dist/auval.log
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: HitPad-mac
-          path: HitPad-mac.zip
+          name: XYSampler-Mac-Installer
+          path: |
+            dist/
+            build.log
+
+      - name: Publish a download page (GitHub Release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(grep -m1 'project(XYSampler VERSION' CMakeLists.txt | sed -E 's/.*VERSION ([0-9.]+).*/\1/')
+          TAG="v$VER-build${{ github.run_number }}"
+          gh release create "$TAG" dist/XYSampler-*-Installer.pkg dist/auval.log \
+            --title "XYSampler $VER test build ${{ github.run_number }}" \
+            --notes-file installer/RELEASE_NOTES.md --prerelease

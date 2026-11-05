@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>XYSampler</title>
+<style>
+@font-face{font-family:'Michroma';src:url('Michroma-Regular.ttf') format('truetype');font-weight:400}
+@font-face{font-family:'Manrope';src:url('Manrope-Variable.ttf') format('truetype');font-weight:200 800}
+html,body{margin:0;height:100%;overflow:hidden;background:#000}
+*{box-sizing:border-box}
+button{font-family:inherit}
+#app{width:780px;height:560px;position:absolute;left:0;top:0;transform-origin:0 0;padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px;
+  font-family:'Manrope',sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;user-select:none;-webkit-user-select:none;cursor:default}
+.mi{font-family:'Michroma',sans-serif}
+.row{display:flex;align-items:center}
+.card{background:linear-gradient(var(--c1),var(--c2));border-radius:22px;box-shadow:0 10px 24px var(--sh),inset 0 1px 0 var(--hi),0 0 0 1px var(--ring)}
+.scr{border-radius:14px;box-shadow:inset 0 2px 7px var(--scrSh),inset 0 0 0 1px var(--scrRing)}
+.lab{font-weight:800;font-size:9.5px;letter-spacing:.2em;color:var(--lab);white-space:nowrap}
+.ttl{font-family:'Michroma',sans-serif;font-size:11px;letter-spacing:.18em}
+.val{font-family:'Michroma',sans-serif;font-size:10px;text-align:right}
+input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18px}
+.chip{border:1.5px solid var(--chipBorder);background:var(--chip);color:var(--ink);border-radius:8px;font-weight:800;font-size:10.5px;cursor:pointer;padding:0}
+.chip[aria-pressed=true]{background:var(--segAcc);border-color:var(--segAcc);color:var(--segTxt)}
+.chip:focus-visible,.sw:focus-visible,#hit:focus-visible,#mot:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.sw{width:22px;height:22px;border-radius:50%;padding:0;cursor:pointer;border:2px solid rgba(0,0,0,.12);box-shadow:0 2px 5px rgba(0,0,0,.18)}
+.sw[aria-pressed=true]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+#wave{flex:1;height:46px;background:var(--waveScr);display:flex;align-items:center;gap:10px;padding:0 12px;cursor:pointer;border-radius:12px}
+#wname{font-weight:800;font-size:9.5px;letter-spacing:.12em;color:var(--waveLab);width:84px;line-height:1.35;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#wbars{flex:1;display:flex;gap:2px;align-items:center;height:36px}
+#wbars .b{flex:1;height:34px;display:grid;place-items:center}
+#wbars .b i{grid-area:1/1;width:100%;display:block}
+#wempty{flex:1;text-align:center;font-weight:800;font-size:10.5px;letter-spacing:.16em;color:var(--waveLab)}
+#app.drop #wave{box-shadow:inset 0 0 0 2px var(--acc)}
+#pad{flex:1;position:relative;overflow:hidden;cursor:crosshair;touch-action:none;background-color:var(--padScr);
+  background-image:linear-gradient(var(--padGrid) 1px,transparent 1px),linear-gradient(90deg,var(--padGrid) 1px,transparent 1px);background-size:12.5% 12.5%}
+#pad .a{position:absolute;pointer-events:none}
+.plab{font-weight:800;font-size:10px;color:var(--padLab)}
+#hit{width:84px;height:84px;flex-shrink:0;border-radius:50%;padding:0;cursor:pointer;border:none;color:var(--hitTxt);
+  background:radial-gradient(circle at 38% 30%,var(--d1) 0%,var(--d2) 55%,var(--d3) 100%);
+  font-family:'Michroma',sans-serif;font-size:14px;letter-spacing:.24em;text-indent:.24em;transition:box-shadow .08s}
+#mot{height:28px;padding:0 12px;border-radius:14px;font-weight:800;font-size:10.5px;letter-spacing:.16em}
+.knob{display:flex;flex-direction:column;align-items:center;width:74px;cursor:ns-resize;touch-action:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="row" style="gap:16px;height:50px">
+    <div style="display:flex;flex-direction:column;gap:4px;width:200px;flex-shrink:0">
+      <div class="mi" style="font-size:19px;letter-spacing:.16em">XY<span style="color:var(--acc)">&#xB7;</span>SAMPLER</div>
+      <div style="font-weight:700;font-size:9px;letter-spacing:.42em;color:var(--lab)">ONE-SHOT SAMPLER</div>
+    </div>
+    <div id="wave" class="scr" role="button" tabindex="0" aria-label="Load a sample">
+      <div id="wname"></div><div id="wbars"></div><div id="wempty">DROP A SAMPLE HERE &#xB7; OR CLICK TO LOAD</div>
+    </div>
+    <div class="row" id="sws" style="gap:9px" role="group" aria-label="Theme"></div>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;gap:14px">
+    <div class="card" style="width:420px;flex-shrink:0;padding:12px;display:flex;flex-direction:column;gap:9px">
+      <div class="row" style="justify-content:space-between;padding:0 4px">
+        <div class="ttl">DECAY &#xD7; PITCH</div>
+        <div style="font-weight:700;font-size:11px;letter-spacing:.04em;color:var(--lab)">SET <span id="setTxt" style="color:var(--ink)"></span> &#xB7; LAST <span id="nowTxt" style="color:var(--motionTxt)"></span></div>
+      </div>
+      <div id="pad" class="scr">
+        <div class="a" style="left:0;right:0;top:50%;border-top:1.5px dashed var(--padLine);opacity:.3"></div>
+        <div class="a plab" id="yTop" style="left:30px;top:9px"></div>
+        <div class="a plab" style="left:30px;top:50%;margin-top:-16px">0 st</div>
+        <div class="a plab" id="yBot" style="left:30px;bottom:26px"></div>
+        <div class="a" id="hl" style="left:0;right:0;height:1.5px;background:var(--padLine);opacity:.35"></div>
+        <div class="a" id="vl" style="top:0;bottom:0;width:1.5px;background:var(--padLine);opacity:.35"></div>
+        <div class="a" id="orbit" style="transform:translate(-50%,-50%);border:1.5px dashed var(--motion);opacity:.6"></div>
+        <div class="a" id="trail" style="inset:0"></div>
+        <div class="a" id="rings" style="inset:0"></div>
+        <div class="a" id="live" style="width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--motion);box-shadow:0 0 12px rgba(var(--motionGlow),.8)"></div>
+        <div class="a" id="home" style="width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:radial-gradient(circle at 38% 30%,var(--d1) 0%,var(--d2) 55%,var(--d3) 100%);box-shadow:0 4px 10px rgba(0,0,0,.28),0 0 0 3px var(--puckRing)"></div>
+        <div class="a plab" style="left:0;right:0;bottom:8px;text-align:center;letter-spacing:.3em">DECAY &#x2192;</div>
+        <div class="a plab" style="left:9px;top:0;bottom:0;display:flex;align-items:center;letter-spacing:.3em;writing-mode:vertical-rl;transform:rotate(180deg)">PITCH</div>
+      </div>
+      <div class="row" style="gap:8px;padding:0 4px">
+        <label class="lab" for="xs">X SENS</label><input id="xs" type="range" min="10" max="100" step="1">
+        <div class="val" id="xsV" style="width:40px"></div>
+        <div style="width:8px"></div>
+        <label class="lab" for="ys">Y SENS</label><input id="ys" type="range" min="2" max="24" step="1">
+        <div class="val" id="ysV" style="width:48px"></div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+      <div class="card" style="flex:1;padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px">
+        <div class="row" style="justify-content:space-between">
+          <div class="ttl">MOTION</div>
+          <button type="button" id="mot" class="chip"></button>
+        </div>
+        <div id="pats" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px" role="group" aria-label="Pattern"></div>
+        <div class="row" style="gap:8px">
+          <label class="lab" for="dp" style="width:44px">DEPTH</label><input id="dp" type="range" min="0" max="50" step="1" style="accent-color:var(--motion)">
+          <div class="val" id="dpV" style="width:36px"></div>
+        </div>
+        <div class="row" style="gap:8px">
+          <div class="lab" style="width:44px">RATE</div>
+          <div id="rates" style="flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px" role="group" aria-label="Rate"></div>
+        </div>
+        <div class="row" style="gap:8px">
+          <div class="lab" style="width:44px">CLOCK</div>
+          <div id="clocks" style="flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px" role="group" aria-label="Clock"></div>
+        </div>
+      </div>
+      <div class="card row" style="height:128px;flex-shrink:0;padding:8px 14px;gap:4px">
+        <div id="knobs" class="row" style="gap:4px"></div>
+        <div style="flex:1"></div>
+        <button type="button" id="hit" aria-label="Hit">HIT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------- themes
+const THEMES = {
+  light:  { bg:'#eef0f3', c1:'#f9fafb', c2:'#f3f4f6', ring:'#e3e6ea', hi:'#ffffff', scr:'#eceef1', scrRing:'#e0e3e7', grid:'#d5d9de', ink:'#2f3338', lab:'#6b737b', acc:'#f05a1a', accT:'#c4420c', raw:'#c9ced4', d1:'#ffffff', d2:'#f6f7f9', d3:'#d8dce1', trackCol:'#d6dade', sh:'rgba(30,40,55,.10)', scrSh:'rgba(20,30,40,.13)', glow:'240,90,26', btnTxt:'#ffffff', chip:'#ffffff', chipBorder:'#d6dade' },
+  dark:   { bg:'#171a1e', c1:'#262b31', c2:'#1e2227', ring:'#2a3037', hi:'#2f363e', scr:'#111316', scrRing:'#252a30', grid:'#262c32', ink:'#e4e8ec', lab:'#a1aab3', acc:'#5ab8ff', accT:'#7cc6ff', raw:'#363d45', d1:'#434b55', d2:'#353c45', d3:'#20252b', trackCol:'#3a424b', sh:'rgba(0,0,0,.5)', scrSh:'rgba(0,0,0,.55)', glow:'90,184,255', btnTxt:'#0e1013', chip:'#2b3138', chipBorder:'#3a424b' },
+  violet: { bg:'#211e37', c1:'#2d294b', c2:'#272340', ring:'#3b366a', hi:'#443f78', scr:'#1c192f', scrRing:'#2d284a', grid:'#2e294c', ink:'#e0ddf1', lab:'#a69ddb', acc:'#f4ff1f', accT:'#f8ff5a', raw:'#3a3461', d1:'#453d72', d2:'#3a3460', d3:'#292544', trackCol:'#3e3767', sh:'rgba(5,3,20,.55)', scrSh:'rgba(0,0,0,.55)', glow:'244,255,31', btnTxt:'#1c192f', chip:'#332e55', chipBorder:'#3e3767' },
+  color:  { bg:'#e6e8ec', c1:'#f3f4f6', c2:'#eceef1', ring:'#e3e6ea', hi:'#fbfbfc', scr:'#eceef1', scrRing:'#e0e3e7', grid:'#d5d9de', ink:'#2f3338', lab:'#5f676f', acc:'#f05a1a', accT:'#c4420c', raw:'#c9ced4', d1:'#ffffff', d2:'#f6f7f9', d3:'#d8dce1', trackCol:'#d0d5db', sh:'rgba(30,40,55,.12)', scrSh:'rgba(0,0,0,.25)', glow:'139,92,246', btnTxt:'#ffffff', chip:'#ffffff', chipBorder:'#d0d5db' }
+};
+const SW = [
+  { id:'light',  label:'Light theme',  fill:'#d9dde2' },
+  { id:'dark',   label:'Dark theme',   fill:'#1a1d22' },
+  { id:'violet', label:'Violet theme', fill:'#5b4fb5' },
+  { id:'color',  label:'Tropic theme', fill:'linear-gradient(90deg,#2fa84f 0 25%,#0ea5c9 25% 50%,#8b5cf6 50% 75%,#e23d3d 75% 100%)' }
+];
+function tokens(name) {
+  const t = Object.assign({}, THEMES[name] || THEMES.light);
+  if (name === 'color') Object.assign(t, { waveScr:'#1f9a44', waveRaw:'rgba(255,255,255,.28)', waveShaped:'#ffffff', waveLab:'#e3f5e8',
+      padScr:'#0797ba', padGrid:'#3cb0c9', padLine:'#ffffff', padLab:'#e6f6fa', puckRing:'rgba(255,255,255,.9)',
+      motion:'#ffd23f', motionGlow:'255,210,63', motionTxt:'#0b7f9c', hitMark:'#ffffff', segAcc:'#2fa84f', segTxt:'#ffffff',
+      hitBg:'#8b5cf6', hitTxt:'#6a3fd0', k0:'#e23d3d', k1:'#8b5cf6', kt0:'#b32a2a', kt1:'#6a3fd0' });
+  else Object.assign(t, { waveScr:t.scr, waveRaw:t.raw, waveShaped:t.acc, waveLab:t.lab, padScr:t.scr, padGrid:t.grid, padLine:t.acc,
+      padLab:t.lab, puckRing:t.acc, motion:t.acc, motionGlow:t.glow, motionTxt:t.accT, hitMark:t.ink, segAcc:t.acc, segTxt:t.btnTxt,
+      hitBg:t.acc, hitTxt:t.accT, k0:t.acc, k1:t.acc, kt0:t.accT, kt1:t.accT });
+  return t;
+}
+
+// ---------------------------------------------------------------- mappings (mirror HitCore.h)
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+function decayRate(x) { x = clamp(x); const xe = Math.min(x, 0.97) / 0.97, t60 = 0.02 * Math.pow(100, xe), open = x > 0.97 ? (x - 0.97) / 0.03 : 0; return 6.907755278982137 / t60 * (1 - open); }
+const t60Of = x => { const r = decayRate(x); return r <= 1e-9 ? Infinity : 6.907755278982137 / r; };
+const t60Txt = t => (!isFinite(t) || t > 20) ? 'OPEN' : t < 1 ? Math.round(t * 1000) + ' ms' : t.toFixed(2) + ' s';
+const decayPos = (x, xs) => clamp(0.5 + (x - 0.5) * xs);
+const pitchSt = (y, ys) => (clamp(y) - 0.5) * 2 * ys;
+const stTxt = st => (st >= 0 ? '+' : '\u2212') + Math.abs(st).toFixed(1) + ' st';
+const driveDb = n => -18 + 42 * n;
+const PATTERNS = ['\u25CB  Circle', '\u221E  Figure-8', '\u2194  Decay', '\u2195  Pitch', '\u25C7  Corners', '\u223F  Drift'];
+const RATES = ['1 bar', '1/2', '1/4', '1/8'], RATE_BEATS = [4, 2, 1, 0.5];
+function motionVec(p, ph) {
+  const th = 2 * Math.PI * ph;
+  if (p === 0) return [Math.cos(th), Math.sin(th)];
+  if (p === 1) return [Math.sin(th), Math.sin(2 * th)];
+  if (p === 2) return [Math.sin(th), 0];
+  if (p === 3) return [0, Math.sin(th)];
+  if (p === 4) { const c = [[-1,1],[1,1],[1,-1],[-1,-1]][Math.min(3, Math.floor((ph - Math.floor(ph)) * 4))]; return [c[0] * .75, c[1] * .75]; }
+  return [0.6 * Math.sin(th) + 0.4 * Math.sin(th * 2.3 + 1), 0.6 * Math.sin(th * 1.3 + 2) + 0.4 * Math.sin(th * 3.1)];
+}
+
+// parameter ranges for display / mock: [min, max, default, skew]
+const P = { decay:[0,1,.55], pitch:[0,1,.5], xsens:[10,100,100], ysens:[2,24,12], drive:[0,1,.25], level:[-36,6,0,2],
+            depth:[0,50,18], pattern:[0,5,0], rate:[0,3,0], clock:[0,1,0] };
+const toN = (k, v) => { const [a, b, , sk] = P[k]; const n = (v - a) / (b - a); return sk ? Math.pow(n, sk) : n; };
+const fromN = (k, n) => { const [a, b, , sk] = P[k]; return a + (b - a) * (sk ? Math.pow(n, 1 / sk) : n); };
+
+// ---------------------------------------------------------------- backend
+const $ = s => document.querySelector(s);
+let Juce, mock = false, S = {}, MOT, native = {};
+async function boot() {
+  if (window.__JUCE__) {
+    Juce = await import('./index.js');
+    for (const k in P) S[k] = Juce.getSliderState(k);
+    MOT = Juce.getToggleState('motion');
+    for (const f of ['hit', 'chooseSample', 'loadSampleData', 'getSample', 'setTheme', 'getTheme']) native[f] = Juce.getNativeFunction(f);
+    window.__JUCE__.backend.addEventListener('live', onLive);
+  } else {
+    mock = true;
+    const ev = () => ({ ls: [], addListener(f) { this.ls.push(f); }, callListeners() { this.ls.forEach(f => f()); } });
+    for (const k in P) { const st = { n: toN(k, P[k][2]), valueChangedEvent: ev(), propertiesChangedEvent: ev() };
+      st.getNormalisedValue = () => st.n; st.setNormalisedValue = x => { st.n = clamp(x); st.valueChangedEvent.callListeners(); };
+      st.sliderDragStarted = () => {}; st.sliderDragEnded = () => {}; S[k] = st; }
+    MOT = { v: true, valueChangedEvent: ev(), propertiesChangedEvent: ev() };
+    MOT.getValue = () => MOT.v; MOT.setValue = x => { MOT.v = !!x; MOT.valueChangedEvent.callListeners(); };
+    startMock();
+  }
+  init();
+}
+
+// ---------------------------------------------------------------- state helpers
+const n = k => S[k].getNormalisedValue();
+const v = k => fromN(k, n(k));
+const idx = k => Math.round(v(k));
+function setV(k, val) { S[k].setNormalisedValue(clamp(toN(k, val))); }
+function setChoice(k, i) { S[k].sliderDragStarted(); setV(k, i); S[k].sliderDragEnded(); }
+
+let theme = 'light', sample = null, lastVer = -1, lastSerial = -1, live = { x: .5, y: .5 }, lastHit = null;
+const trail = [], rings = [];
+
+// ---------------------------------------------------------------- build DOM
+function build() {
+  for (const w of SW) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sw'; b.style.background = w.fill; b.setAttribute('aria-label', w.label); b.dataset.th = w.id;
+    b.onclick = () => { applyTheme(w.id); if (native.setTheme) native.setTheme(w.id); };
+    $('#sws').appendChild(b);
+  }
+  PATTERNS.forEach((label, i) => { const b = chip(label, 34, 10); b.style.fontSize = '11px'; b.style.fontWeight = '700'; b.onclick = () => setChoice('pattern', i); $('#pats').appendChild(b); });
+  RATES.forEach((label, i) => { const b = chip(label, 28, 8); b.onclick = () => setChoice('rate', i); $('#rates').appendChild(b); });
+  ['TIME', 'STEP'].forEach((label, i) => { const b = chip(label, 28, 8); b.style.letterSpacing = '.1em'; b.onclick = () => setChoice('clock', i); $('#clocks').appendChild(b); });
+  for (let i = 0; i < 64; i++) { const d = document.createElement('div'); d.className = 'b'; d.innerHTML = '<i></i><i></i>'; $('#wbars').appendChild(d); }
+  knob('drive', 'DRIVE', 0); knob('level', 'LEVEL', 1);
+
+  for (const [id, k] of [['#xs', 'xsens'], ['#ys', 'ysens'], ['#dp', 'depth']]) {
+    const el = $(id);
+    el.addEventListener('pointerdown', () => S[k].sliderDragStarted());
+    el.addEventListener('pointerup', () => S[k].sliderDragEnded());
+    el.addEventListener('input', () => setV(k, +el.value));
+  }
+  $('#mot').onclick = () => MOT.setValue(!MOT.getValue());
+  $('#hit').onclick = () => hit();
+  $('#wave').onclick = () => { if (native.chooseSample) native.chooseSample(); };
+  $('#wave').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#wave').click(); } };
+
+  // pad: drag sets the point, click auditions
+  const pad = $('#pad');
+  const setFrom = e => { const r = pad.getBoundingClientRect(); setV('decay', clamp((e.clientX - r.left) / r.width)); setV('pitch', clamp(1 - (e.clientY - r.top) / r.height)); };
+  pad.addEventListener('pointerdown', e => {
+    pad.setPointerCapture(e.pointerId); S.decay.sliderDragStarted(); S.pitch.sliderDragStarted();
+    if (!e.shiftKey) setFrom(e); pad._last = [e.clientX, e.clientY]; hit();
+  });
+  pad.addEventListener('pointermove', e => {
+    if (!(e.buttons & 1)) return;
+    if (e.shiftKey && pad._last) { const r = pad.getBoundingClientRect(), dx = (e.clientX - pad._last[0]) / r.width * .1, dy = (e.clientY - pad._last[1]) / r.height * .1;
+      setV('decay', clamp(v('decay') + dx)); setV('pitch', clamp(v('pitch') - dy)); }
+    else setFrom(e);
+    pad._last = [e.clientX, e.clientY];
+  });
+  const end = () => { S.decay.sliderDragEnded(); S.pitch.sliderDragEnded(); };
+  pad.addEventListener('pointerup', end); pad.addEventListener('lostpointercapture', end);
+  pad.addEventListener('dblclick', () => { setChoice('decay', P.decay[2]); setChoice('pitch', P.pitch[2]); });
+
+  // drag & drop a file anywhere
+  addEventListener('dragover', e => { e.preventDefault(); $('#app').classList.add('drop'); });
+  addEventListener('dragleave', () => $('#app').classList.remove('drop'));
+  addEventListener('drop', e => {
+    e.preventDefault(); $('#app').classList.remove('drop');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f || !native.loadSampleData) return;
+    const rd = new FileReader();
+    rd.onload = () => { const s = String(rd.result); native.loadSampleData(f.name, s.slice(s.indexOf(',') + 1)); };
+    rd.readAsDataURL(f);
+  });
+}
+function chip(label, h, r) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = label;
+  b.style.height = h + 'px'; b.style.borderRadius = r + 'px'; return b;
+}
+const pt = (r, a) => { const rad = a * Math.PI / 180; return [40 + r * Math.sin(rad), 40 - r * Math.cos(rad)]; };
+const arcD = (r, a0, a1) => { const p0 = pt(r, a0), p1 = pt(r, a1); return `M${p0[0].toFixed(2)} ${p0[1].toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${p1[0].toFixed(2)} ${p1[1].toFixed(2)}`; };
+function knob(k, name, i) {
+  const el = document.createElement('div'); el.className = 'knob'; el.tabIndex = 0; el.setAttribute('role', 'slider'); el.setAttribute('aria-label', name);
+  el.innerHTML = `<svg width="62" height="62" viewBox="0 0 80 80" aria-hidden="true"><defs><radialGradient id="kg${i}" cx="38%" cy="30%" r="80%">
+    <stop offset="0" stop-color="var(--d1)"/><stop offset=".55" stop-color="var(--d2)"/><stop offset="1" stop-color="var(--d3)"/></radialGradient></defs>
+    <path d="${arcD(34, -135, 135)}" fill="none" stroke="var(--trackCol)" stroke-width="4" stroke-linecap="round"/>
+    <path class="arc" fill="none" stroke="var(--k${i})" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="40" cy="42" r="23" fill="rgba(0,0,0,.18)"/><circle cx="40" cy="40" r="23" fill="url(#kg${i})" stroke="var(--ring)"/>
+    <line class="ind" stroke="var(--k${i})" stroke-width="3" stroke-linecap="round"/></svg>
+    <div class="lab">${name}</div><div class="mi kv" style="font-size:10.5px;margin-top:2px;color:var(--kt${i})"></div>`;
+  let y0 = 0, n0 = 0;
+  el.addEventListener('pointerdown', e => {
+    if (e.altKey) { setChoice(k, P[k][2]); return; }
+    el.setPointerCapture(e.pointerId); y0 = e.clientY; n0 = n(k); S[k].sliderDragStarted();
+  });
+  el.addEventListener('pointermove', e => { if (e.buttons & 1) S[k].setNormalisedValue(clamp(n0 + (y0 - e.clientY) / (e.shiftKey ? 1000 : 180))); });
+  el.addEventListener('pointerup', () => S[k].sliderDragEnded());
+  el.addEventListener('dblclick', () => setChoice(k, P[k][2]));
+  el.addEventListener('keydown', e => { const d = e.key === 'ArrowUp' || e.key === 'ArrowRight' ? .02 : e.key === 'ArrowDown' || e.key === 'ArrowLeft' ? -.02 : 0;
+    if (d) { e.preventDefault(); S[k].setNormalisedValue(clamp(n(k) + d)); } });
+  el.dataset.k = k;
+  $('#knobs').appendChild(el);
+}
+
+// ---------------------------------------------------------------- render
+function applyTheme(name) {
+  theme = THEMES[name] ? name : 'light';
+  const t = tokens(theme), st = document.documentElement.style;
+  for (const k in t) st.setProperty('--' + k, t[k]);
+  document.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.th === theme ? 'true' : 'false'));
+  $('#hit').style.boxShadow = `0 8px 18px rgba(0,0,0,.25),0 0 0 4px ${t.hitBg},0 0 20px rgba(${t.glow},.35)`;
+  drawWave();
+}
+const pct = x => (x * 100).toFixed(2) + '%';
+function render() {
+  const x = v('decay'), y = v('pitch'), xs = v('xsens') / 100, ys = Math.round(v('ysens')), on = !!MOT.getValue();
+  const depth = Math.round(v('depth')) / 100, pat = idx('pattern');
+  $('#xs').value = Math.round(v('xsens')); $('#xsV').textContent = Math.round(v('xsens')) + '%';
+  $('#ys').value = ys; $('#ysV').textContent = '\u00B1' + ys + ' st';
+  $('#dp').value = Math.round(depth * 100); $('#dpV').textContent = Math.round(depth * 100) + '%';
+  $('#yTop').textContent = '+' + ys; $('#yBot').textContent = '\u2212' + ys;
+  $('#home').style.left = pct(x); $('#home').style.top = pct(1 - y);
+  $('#hl').style.top = pct(1 - y); $('#vl').style.left = pct(x);
+  $('#setTxt').textContent = t60Txt(t60Of(decayPos(x, xs))) + ' \u00B7 ' + stTxt(pitchSt(y, ys));
+  $('#nowTxt').textContent = lastHit ? t60Txt(lastHit.t60) + ' \u00B7 ' + stTxt(lastHit.st) : '\u2014';
+  const orb = $('#orbit');
+  orb.style.display = on ? '' : 'none'; orb.style.left = pct(x); orb.style.top = pct(1 - y);
+  orb.style.width = (depth * 200) + '%'; orb.style.height = (depth * 200) + '%'; orb.style.borderRadius = pat === 4 ? '6px' : '50%';
+  $('#live').style.display = on ? '' : 'none'; $('#trail').style.display = on ? '' : 'none';
+  $('#live').style.left = pct(live.x); $('#live').style.top = pct(1 - live.y);
+  $('#mot').setAttribute('aria-pressed', on ? 'true' : 'false'); $('#mot').textContent = on ? '\u25CF ON' : '\u25CB OFF';
+  [...$('#pats').children].forEach((b, i) => b.setAttribute('aria-pressed', i === pat ? 'true' : 'false'));
+  [...$('#rates').children].forEach((b, i) => b.setAttribute('aria-pressed', i === idx('rate') ? 'true' : 'false'));
+  [...$('#clocks').children].forEach((b, i) => b.setAttribute('aria-pressed', i === idx('clock') ? 'true' : 'false'));
+  for (const el of document.querySelectorAll('.knob')) {
+    const k = el.dataset.k, nn = n(k), a = -135 + 270 * nn, p1 = pt(8, a), p2 = pt(19, a);
+    el.querySelector('.arc').setAttribute('d', arcD(34, -135, Math.max(-134.9, a)));
+    const ind = el.querySelector('.ind'); ind.setAttribute('x1', p1[0]); ind.setAttribute('y1', p1[1]); ind.setAttribute('x2', p2[0]); ind.setAttribute('y2', p2[1]);
+    const val = k === 'drive' ? (driveDb(v(k)) >= 0 ? '+' : '\u2212') + Math.abs(driveDb(v(k))).toFixed(1) + ' dB' : (v(k) >= 0 ? '+' : '\u2212') + Math.abs(v(k)).toFixed(1) + ' dB';
+    el.querySelector('.kv').textContent = val; el.setAttribute('aria-valuetext', val);
+  }
+  drawWave();
+}
+function drawWave() {
+  const has = !!(sample && sample.peaks && sample.peaks.length);
+  $('#wbars').style.display = has ? '' : 'none'; $('#wname').style.display = has ? '' : 'none'; $('#wempty').style.display = has ? 'none' : '';
+  if (!has) return;
+  const x = decayPos(v('decay'), v('xsens') / 100), st = pitchSt(v('pitch'), Math.round(v('ysens'))), ratio = Math.pow(2, st / 12), rate = decayRate(x);
+  $('#wname').innerHTML = '';
+  const nm = document.createElement('div'); nm.textContent = String(sample.name).toUpperCase();
+  const du = document.createElement('div'); du.textContent = (sample.dur / ratio).toFixed(2) + ' s';
+  $('#wname').append(nm, du);
+  const bars = $('#wbars').children, N = bars.length, pk = sample.peaks, M = pk.length;
+  for (let i = 0; i < N; i++) {
+    let m = 0; for (let j = Math.floor(i * M / N); j < Math.max(Math.floor(i * M / N) + 1, Math.floor((i + 1) * M / N)); j++) m = Math.max(m, pk[j] || 0);
+    const tOut = (i + .5) / N * sample.dur / ratio, env = Math.exp(-rate * tOut);
+    bars[i].children[0].style.cssText = `height:${Math.max(2, m * 32)}px;background:var(--waveRaw)`;
+    bars[i].children[1].style.cssText = `height:${Math.max(1.5, m * env * 32)}px;background:var(--waveShaped)`;
+  }
+}
+function frame() {
+  const now = performance.now(), on = !!MOT.getValue();
+  const tr = $('#trail'), rg = $('#rings');
+  tr.innerHTML = on ? trail.map((p, i) => `<div style="position:absolute;left:${pct(p.x)};top:${pct(1 - p.y)};width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--motion);opacity:${((i + 1) / trail.length * .35).toFixed(2)}"></div>`).join('') : '';
+  while (rings.length && now - rings[0].t > 1600) rings.shift();
+  rg.innerHTML = rings.map(r => `<div style="position:absolute;left:${pct(r.x)};top:${pct(1 - r.y)};width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2px solid var(--hitMark);opacity:${(1 - (now - r.t) / 1600).toFixed(2)}"></div>`).join('');
+  requestAnimationFrame(frame);
+}
+function flashHit() {
+  const t = tokens(theme), b = $('#hit');
+  b.style.boxShadow = `0 8px 18px rgba(0,0,0,.25),0 0 0 4px ${t.hitBg},0 0 30px rgba(${t.glow},.9)`;
+  clearTimeout(flashHit.tm); flashHit.tm = setTimeout(() => b.style.boxShadow = `0 8px 18px rgba(0,0,0,.25),0 0 0 4px ${t.hitBg},0 0 20px rgba(${t.glow},.35)`, 120);
+}
+function hit() { if (native.hit) native.hit(); else if (mock) mockHit(); }
+
+// ---------------------------------------------------------------- live data from the processor
+function onLive(d) {
+  live = { x: +d.lx, y: +d.ly };
+  trail.push(live); if (trail.length > 14) trail.shift();
+  if (d.serial !== lastSerial) {
+    if (lastSerial !== -1) { rings.push({ x: +d.hx, y: +d.hy, t: performance.now() }); if (rings.length > 6) rings.shift(); flashHit(); }
+    lastSerial = d.serial; lastHit = d.serial > 0 ? { t60: +d.t60 > 900 ? Infinity : +d.t60, st: +d.st } : null;
+  }
+  if (d.ver !== lastVer) { lastVer = d.ver; if (native.getSample) native.getSample().then(s => { sample = s || null; drawWave(); }); }
+  render();
+}
+
+// ---------------------------------------------------------------- browser preview (no audio)
+let mph = 0, mstep = 0, mserial = 0, mhx = .5, mhy = .5;
+function mockPoint() { const on = MOT.getValue(), x = v('decay'), y = v('pitch'); if (!on) return [x, y];
+  const d = Math.round(v('depth')) / 100, w = motionVec(idx('pattern'), idx('clock') === 1 ? mstep : mph); return [clamp(x + d * w[0]), clamp(y + d * w[1])]; }
+function mockHit() { const p = mockPoint(); if (MOT.getValue() && idx('clock') === 1) mstep += 1 / 8; mhx = p[0]; mhy = p[1]; mserial++; }
+function startMock() {
+  sample = { name: 'test_kick', dur: 0.8, peaks: Array.from({ length: 120 }, (_, i) => i < 2 ? 1 : Math.exp(-i / 119 * 3.2) * (0.72 + 0.28 * Math.abs(Math.sin(i * 0.7)))) };
+  let acc = 0;
+  setInterval(() => {
+    const dt = 1 / 30; mph += dt / (RATE_BEATS[idx('rate')] * 0.5); acc += dt;
+    if (acc >= 0.25) { acc -= 0.25; mockHit(); }
+    const p = mockPoint(), x = decayPos(mhx, v('xsens') / 100);
+    onLive({ lx: p[0], ly: p[1], serial: mserial, hx: mhx, hy: mhy, t60: Math.min(999, t60Of(x)), st: pitchSt(mhy, Math.round(v('ysens'))), ver: 0 });
+  }, 1000 / 30);
+}
+
+// ---------------------------------------------------------------- init
+function fit() { const s = Math.min(innerWidth / 780, innerHeight / 560); $('#app').style.transform = `scale(${s})`; }
+function init() {
+  build();
+  for (const k in S) S[k].valueChangedEvent.addListener(render);
+  MOT.valueChangedEvent.addListener(render);
+  applyTheme('light');
+  if (native.getTheme) native.getTheme().then(t => applyTheme(String(t)));
+  render(); fit(); addEventListener('resize', fit);
+  requestAnimationFrame(frame);
+}
+boot();
+</script>
+</body>
+</html>

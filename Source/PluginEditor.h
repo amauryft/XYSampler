@@ -1,59 +1,30 @@
 #pragma once
 
+#include <juce_gui_extra/juce_gui_extra.h>
 #include "PluginProcessor.h"
-#include "XYPad.h"
 
-//==============================================================================
-/** Waveform of the loaded sample (grey) with the current decay envelope applied (orange).
-    Click to load a file; you can also drop one anywhere on the plugin window. */
-class WaveStrip : public juce::Component
+class XYSamplerEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
-    std::function<void()> onClick;
+    static constexpr int kW = 780, kH = 560;
 
-    void setSample (std::shared_ptr<const hit::SampleData> s);
-    void setDecay (float x) { if (std::abs (x - decayX) > 1.0e-6f) { decayX = x; repaint(); } }
-
-    void paint (juce::Graphics&) override;
-    void mouseUp (const juce::MouseEvent& e) override { if (e.mouseWasClicked() && onClick) onClick(); }
-
-private:
-    std::shared_ptr<const hit::SampleData> sample;
-    std::vector<float> peaks;   // per-column peak (0..1)
-    float decayX = 0.55f;
-};
-
-//==============================================================================
-class HitPadEditor : public juce::AudioProcessorEditor,
-                     public juce::FileDragAndDropTarget,
-                     private juce::Timer
-{
-public:
-    explicit HitPadEditor (HitPadProcessor&);
-    ~HitPadEditor() override;
-
-    void paint (juce::Graphics&) override;
+    explicit XYSamplerEditor (XYSamplerProcessor&);
+    ~XYSamplerEditor() override;
     void resized() override;
-
-    bool isInterestedInFileDrag (const juce::StringArray& files) override;
-    void filesDropped (const juce::StringArray& files, int x, int y) override;
 
 private:
     void timerCallback() override;
-    void chooseFile();
-    void refreshSample();
+    std::optional<juce::WebBrowserComponent::Resource> getResource (const juce::String& url);
+    juce::WebBrowserComponent::Options makeOptions();
 
-    HitPadProcessor& proc;
-
-    WaveStrip wave;
-    XYPad pad;
-    juce::TextButton hitButton { "HIT" };
-    juce::Slider levelSlider;
-    juce::SliderParameterAttachment levelAttach;
-
+    XYSamplerProcessor& proc;
+    std::vector<std::unique_ptr<juce::WebSliderRelay>> sliderRelays;
+    std::vector<std::unique_ptr<juce::WebToggleButtonRelay>> toggleRelays;
+    std::vector<juce::RangedAudioParameter*> sliderParams, toggleParams;
+    juce::WebBrowserComponent web;
+    std::vector<std::unique_ptr<juce::WebSliderParameterAttachment>> sliderAttachments;
+    std::vector<std::unique_ptr<juce::WebToggleButtonParameterAttachment>> toggleAttachments;
     std::unique_ptr<juce::FileChooser> chooser;
-    int lastSampleVersion = -1, lastHitCount = 0;
-    float lastDecay = -1.0f, lastSat = -1.0f;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HitPadEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (XYSamplerEditor)
 };
