@@ -33,7 +33,7 @@ input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18p
 #wempty{flex:1;text-align:center;font-weight:800;font-size:10.5px;letter-spacing:.16em;color:var(--waveLab)}
 #app.drop #wave{box-shadow:inset 0 0 0 2px var(--acc)}
 #pad{flex:1;position:relative;overflow:hidden;cursor:crosshair;touch-action:none;background-color:var(--padScr);
-  background-image:linear-gradient(var(--padGrid) 1px,transparent 1px),linear-gradient(90deg,var(--padGrid) 1px,transparent 1px);background-size:12.5% 12.5%}
+  background-image:linear-gradient(var(--padGrid) 1px,transparent 1px),linear-gradient(90deg,var(--padGrid) 1px,transparent 1px);background-size:12.5% 12.5%;background-position:50% 50%;transition:background-size .35s cubic-bezier(.2,.8,.2,1)}
 #pad .a{position:absolute;pointer-events:none}
 .plab{font-weight:800;font-size:10px;color:var(--padLab)}
 #hit{width:84px;height:84px;flex-shrink:0;border-radius:50%;padding:0;cursor:pointer;border:none;color:var(--hitTxt);
@@ -66,7 +66,7 @@ input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18p
         <div class="a" style="left:0;right:0;top:50%;border-top:1.5px dashed var(--padLine);opacity:.3"></div>
         <div class="a plab" id="yTop" style="left:30px;top:9px"></div>
         <div class="a plab" style="left:30px;top:50%;margin-top:-16px">0 st</div>
-        <div class="a plab" id="yBot" style="left:30px;bottom:26px"></div>
+        <div class="a plab" id="yBot" style="left:30px;bottom:28px"></div>
         <div class="a" id="hl" style="left:0;right:0;height:1.5px;background:var(--padLine);opacity:.35"></div>
         <div class="a" id="vl" style="top:0;bottom:0;width:1.5px;background:var(--padLine);opacity:.35"></div>
         <div class="a" id="orbit" style="transform:translate(-50%,-50%);border:1.5px dashed var(--motion);opacity:.6"></div>
@@ -74,8 +74,8 @@ input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18p
         <div class="a" id="rings" style="inset:0"></div>
         <div class="a" id="live" style="width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--motion);box-shadow:0 0 12px rgba(var(--motionGlow),.8)"></div>
         <div class="a" id="home" style="width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:radial-gradient(circle at 38% 30%,var(--d1) 0%,var(--d2) 55%,var(--d3) 100%);box-shadow:0 4px 10px rgba(0,0,0,.28),0 0 0 3px var(--puckRing)"></div>
-        <div class="a plab" style="left:0;right:0;bottom:8px;text-align:center;letter-spacing:.3em">DECAY &#x2192;</div>
-        <div class="a plab" style="left:9px;top:0;bottom:0;display:flex;align-items:center;letter-spacing:.3em;writing-mode:vertical-rl;transform:rotate(180deg)">PITCH</div>
+        <div class="a plab" style="left:32px;bottom:8px;letter-spacing:.3em;line-height:1">DECAY &#x2192;</div>
+        <div class="a plab" style="left:9px;bottom:8px;letter-spacing:.3em;line-height:1;writing-mode:vertical-rl;transform:rotate(180deg)">PITCH &#x2192;</div>
       </div>
       <div class="row" style="gap:8px;padding:0 4px">
         <label class="lab" for="xs">X SENS</label><input id="xs" type="range" min="10" max="100" step="1">
@@ -302,6 +302,7 @@ function render() {
   $('#ys').value = ys; $('#ysV').textContent = '\u00B1' + ys + ' st';
   $('#dp').value = Math.round(depth * 100); $('#dpV').textContent = Math.round(depth * 100) + '%';
   $('#yTop').textContent = '+' + ys; $('#yBot').textContent = '\u2212' + ys;
+  $('#pad').style.backgroundSize = `${(12.5 * Math.sqrt(1 / xs)).toFixed(2)}% ${(12.5 * Math.sqrt(12 / ys)).toFixed(2)}%`;
   $('#home').style.left = pct(x); $('#home').style.top = pct(1 - y);
   $('#hl').style.top = pct(1 - y); $('#vl').style.left = pct(x);
   $('#sD').textContent = t60Txt(t60Of(decayPos(x, xs))); $('#sP').textContent = stTxt(pitchSt(y, ys));
