@@ -4,6 +4,8 @@ It shows up under **Instrument → AU Instruments → Mau Audio → XYSampler**.
 If macOS blocks the installer: System Settings → Privacy & Security → **Open Anyway**.
 The installer also removes the old *HitPad* test build.
 
+0.2.3: selected buttons show only an accent border and text, with no fill, like SuperSpread. DECAY is centred again, and PITCH starts on its baseline.
+
 0.2.2: the pad grid zooms with X SENS / Y SENS (lower sensitivity = bigger cells), and the PITCH / DECAY labels sit together in the bottom-left corner.
 
 0.2.1: the SET / LAST readout no longer jumps around. Each value has a fixed slot.

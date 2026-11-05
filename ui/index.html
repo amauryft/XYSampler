@@ -20,8 +20,9 @@ button{font-family:inherit}
 .val{font-family:'Michroma',sans-serif;font-size:10px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .num{display:inline-block;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18px}
-.chip{border:1.5px solid var(--chipBorder);background:var(--chip);color:var(--ink);border-radius:8px;font-weight:800;font-size:10.5px;cursor:pointer;padding:0}
-.chip[aria-pressed=true]{background:var(--segAcc);border-color:var(--segAcc);color:var(--segTxt)}
+.chip{border:1.5px solid var(--chipBorder);background:linear-gradient(var(--chip),var(--c2));color:var(--lab);border-radius:8px;font-weight:800;font-size:10.5px;cursor:pointer;padding:0;box-shadow:0 2px 5px rgba(0,0,0,.06);transition:border-color .12s,color .12s,box-shadow .12s}
+.chip[aria-pressed=true]{background:var(--chip);border-color:var(--segAcc);color:var(--segOn);box-shadow:0 2px 8px rgba(var(--segGlow),.22)}
+.chip:active{transform:translateY(1px)}
 .chip:focus-visible,.sw:focus-visible,#hit:focus-visible,#mot:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .sw{width:22px;height:22px;border-radius:50%;padding:0;cursor:pointer;border:2px solid rgba(0,0,0,.12);box-shadow:0 2px 5px rgba(0,0,0,.18)}
 .sw[aria-pressed=true]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
@@ -74,8 +75,8 @@ input[type=range]{margin:0;min-width:0;flex:1;accent-color:var(--acc);height:18p
         <div class="a" id="rings" style="inset:0"></div>
         <div class="a" id="live" style="width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--motion);box-shadow:0 0 12px rgba(var(--motionGlow),.8)"></div>
         <div class="a" id="home" style="width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:radial-gradient(circle at 38% 30%,var(--d1) 0%,var(--d2) 55%,var(--d3) 100%);box-shadow:0 4px 10px rgba(0,0,0,.28),0 0 0 3px var(--puckRing)"></div>
-        <div class="a plab" style="left:32px;bottom:8px;letter-spacing:.3em;line-height:1">DECAY &#x2192;</div>
-        <div class="a plab" style="left:9px;bottom:8px;letter-spacing:.3em;line-height:1;writing-mode:vertical-rl;transform:rotate(180deg)">PITCH &#x2192;</div>
+        <div class="a plab" style="left:0;right:0;bottom:8px;text-align:center;letter-spacing:.3em;line-height:1">DECAY &#x2192;</div>
+        <div class="a plab" id="pitchLab" style="left:9px;bottom:8px;letter-spacing:.3em;line-height:1;writing-mode:vertical-rl;transform:rotate(180deg)">PITCH &#x2192;</div>
       </div>
       <div class="row" style="gap:8px;padding:0 4px">
         <label class="lab" for="xs">X SENS</label><input id="xs" type="range" min="10" max="100" step="1">
@@ -133,10 +134,10 @@ function tokens(name) {
   const t = Object.assign({}, THEMES[name] || THEMES.light);
   if (name === 'color') Object.assign(t, { waveScr:'#1f9a44', waveRaw:'rgba(255,255,255,.28)', waveShaped:'#ffffff', waveLab:'#e3f5e8',
       padScr:'#0797ba', padGrid:'#3cb0c9', padLine:'#ffffff', padLab:'#e6f6fa', puckRing:'rgba(255,255,255,.9)',
-      motion:'#ffd23f', motionGlow:'255,210,63', motionTxt:'#0b7f9c', hitMark:'#ffffff', segAcc:'#2fa84f', segTxt:'#ffffff',
+      motion:'#ffd23f', motionGlow:'255,210,63', motionTxt:'#0b7f9c', hitMark:'#ffffff', segAcc:'#2fa84f', segTxt:'#ffffff', segOn:'#1f7f3a', segGlow:'47,168,79',
       hitBg:'#8b5cf6', hitTxt:'#6a3fd0', k0:'#e23d3d', k1:'#8b5cf6', kt0:'#b32a2a', kt1:'#6a3fd0' });
   else Object.assign(t, { waveScr:t.scr, waveRaw:t.raw, waveShaped:t.acc, waveLab:t.lab, padScr:t.scr, padGrid:t.grid, padLine:t.acc,
-      padLab:t.lab, puckRing:t.acc, motion:t.acc, motionGlow:t.glow, motionTxt:t.accT, hitMark:t.ink, segAcc:t.acc, segTxt:t.btnTxt,
+      padLab:t.lab, puckRing:t.acc, motion:t.acc, motionGlow:t.glow, motionTxt:t.accT, hitMark:t.ink, segAcc:t.acc, segTxt:t.btnTxt, segOn:t.accT, segGlow:t.glow,
       hitBg:t.acc, hitTxt:t.accT, k0:t.acc, k1:t.acc, kt0:t.accT, kt1:t.accT });
   return t;
 }
